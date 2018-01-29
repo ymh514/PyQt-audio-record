@@ -72,7 +72,7 @@ class Recorder(QObject):
         self.pa.terminate()
 
         # WAVE_OUTPUT_FILENAME = self.nameText.toPlainText() + ".wav"
-        WAVE_OUTPUT_FILENAME = "test1.wav"
+        WAVE_OUTPUT_FILENAME = "test.wav"
 
         wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
         wf.setnchannels(CHANNELS)
