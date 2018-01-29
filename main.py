@@ -1,13 +1,17 @@
 import time
 import sys
 
-from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QApplication, QPushButton, QTextEdit, QVBoxLayout, QWidget,QMainWindow,QApplication
+import PyQt5.QtGui
+from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot,QSize,QRect
+from PyQt5.QtWidgets import QApplication, QPushButton, QTextEdit, QVBoxLayout, QWidget,QMainWindow,QApplication,QPlainTextEdit
 from ui_pyqt import Ui_MainWindow
+from verifyWindow import Ui_verifyWindow
 import pyaudio
 import wave
 import numpy as np
 import struct
+import subprocess
+import shlex
 
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
@@ -82,6 +86,19 @@ class Recorder(QObject):
         wf.close()
 
         self.__abort = True
+
+class VerifyWindow(QMainWindow,Ui_verifyWindow):
+    def __init__(self, parent=None):
+        super(VerifyWindow, self).__init__(parent)
+        self.setupUi(self)
+        self.runVerify()
+
+    def runVerify(self):
+        print('Run verify')
+        p = subprocess.Popen(["./test.sh","-p"], shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        (stdoutput, erroutput) = p.communicate()
+        str = stdoutput.decode("utf-8")
+        self.infoText.setPlainText(str)
 
 
 class AudioBase(QMainWindow, Ui_MainWindow):
@@ -172,6 +189,12 @@ class AudioBase(QMainWindow, Ui_MainWindow):
         # even though threads have exited, there may still be messages on the main thread's
         # queue (messages that threads emitted before the abort):
         print('All threads exited')
+
+        self.verify = VerifyWindow(self)
+        self.verify.show()
+
+
+
 
 if __name__ == '__main__':
     import sys
