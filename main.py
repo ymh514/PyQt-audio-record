@@ -13,10 +13,11 @@ import struct
 import subprocess
 import shlex
 
-CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000
+CHUNK_DURATION_MS = 10       # supports 10, 20 and 30 (ms)
+CHUNK = 1024
 
 class Recorder(QObject):
     """
@@ -57,7 +58,7 @@ class Recorder(QObject):
                                    frames_per_buffer=CHUNK)
 
         while 1:
-            time.sleep(0.05)
+            # time.sleep(0.05)
             ### record
             data = self.stream.read(CHUNK)
             self.frames.append(data)
@@ -78,12 +79,14 @@ class Recorder(QObject):
         # WAVE_OUTPUT_FILENAME = self.nameText.toPlainText() + ".wav"
         WAVE_OUTPUT_FILENAME = "test.wav"
 
+
         wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
         wf.setnchannels(CHANNELS)
         wf.setsampwidth(self.pa.get_sample_size(FORMAT))
         wf.setframerate(RATE)
         wf.writeframes(b''.join(self.frames))
         wf.close()
+
 
         self.__abort = True
 
@@ -118,8 +121,7 @@ class AudioBase(QMainWindow, Ui_MainWindow):
 
 
     def _connectSignals(self):
-        ## TODO : 放btn connect function
-        print(' TODO ')
+        ## 放btn connect function
         self.startBtn.clicked.connect(self.startRecord)
         self.stopBtn.clicked.connect(self.abort_workers)
 
@@ -190,8 +192,9 @@ class AudioBase(QMainWindow, Ui_MainWindow):
         # queue (messages that threads emitted before the abort):
         print('All threads exited')
 
-        self.verify = VerifyWindow(self)
-        self.verify.show()
+        ## TODO : DEBUG
+        # self.verify = VerifyWindow(self)
+        # self.verify.show()
 
 
 
