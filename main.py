@@ -137,6 +137,7 @@ class MainGui(QMainWindow, Ui_MainWindow):
     def initial_ui(self):
         # place the window
         self.move(200,100)
+        self.setWindowTitle('Deepspeech with PyQt')
         # PushButton
         self.startBtn.setEnabled(True)
         # GraphicsView
@@ -150,7 +151,7 @@ class MainGui(QMainWindow, Ui_MainWindow):
         self.graphicsView.p1.setYRange(0,300)
 
         self.infoText.setDisabled(True)
-
+        self.infereceText.setDisabled(True)
         # set start icon
         self.startBtn.setIcon(QtGui.QIcon('record.png'))
         self.startBtn.setIconSize(QtCore.QSize(100,100))
@@ -246,6 +247,9 @@ class MainGui(QMainWindow, Ui_MainWindow):
         self.resetBtn.setDisabled(True)
         self.startBtn.setEnabled(True)
         self.infoText.clear()
+        self.infoText.setDisabled(True)
+        self.infereceText.clear()
+        self.infereceText.setDisabled(True)
         self.graphicsView.p1.clear()
 
     @pyqtSlot(np.ndarray)
@@ -259,6 +263,10 @@ class MainGui(QMainWindow, Ui_MainWindow):
     def on_inference_worker_end(self,str):
         self.statusLabel.hide()
         self.infoText.setEnabled(True)
+        self.infereceText.setEnabled(True)
+        result = str.split('\n')
+        print('%%%%%%%%% : ',result[3])
+        self.infereceText.setPlainText(result[3])
         self.infoText.setPlainText(str)
         self.resetBtn.setEnabled(True)
 
