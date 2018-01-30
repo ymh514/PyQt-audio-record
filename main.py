@@ -4,8 +4,11 @@ import sys
 import PyQt5.QtGui
 from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot,QSize,QRect
 from PyQt5.QtWidgets import QApplication, QPushButton, QTextEdit, QVBoxLayout, QWidget,QMainWindow,QApplication,QPlainTextEdit
-from ui_pyqt import Ui_MainWindow
-from verifyWindow import Ui_verifyWindow
+from PyQt5.QtGui import QMovie
+from PyQt5 import QtGui, QtCore,QtWidgets
+
+from mainwindow import Ui_MainWindow
+
 import pyaudio
 import wave
 import numpy as np
@@ -89,19 +92,6 @@ class Recorder(QObject):
 
         self.__abort = True
 
-class VerifyWindow(QMainWindow,Ui_verifyWindow):
-    def __init__(self, parent=None):
-        super(VerifyWindow, self).__init__(parent)
-        self.setupUi(self)
-        self.runVerify()
-
-    def runVerify(self):
-        print('Run verify')
-        p = subprocess.Popen(["./test.sh","-p"], shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        (stdoutput, erroutput) = p.communicate()
-        str = stdoutput.decode("utf-8")
-        self.infoText.setPlainText(str)
-
 
 class AudioBase(QMainWindow, Ui_MainWindow):
 
@@ -137,6 +127,21 @@ class AudioBase(QMainWindow, Ui_MainWindow):
         self.graphicsView.p1 = self.graphicsView.addPlot()
         self.graphicsView.p1.setLabel('bottom', 'RowData', 'PCM')
         self.graphicsView.p1.setYRange(0,300)
+
+        self.infoText.setDisabled(True)
+
+        # set waiting
+        self.movie = QMovie("wait.gif",QtCore.QByteArray(),self)
+
+        self.movie.setCacheMode(QtGui.QMovie.CacheAll)
+        self.movie.setSpeed(100)
+        self.statusLabel.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.movie.setCacheMode(QtGui.QMovie.CacheAll)
+        self.movie.setSpeed(100)
+        self.statusLabel.setMovie(self.movie)
+        self.movie.start()
+
+        self.statusLabel.hide()
 
     def get_spectrum(self, data):
         T = 1.0/RATE
@@ -190,11 +195,18 @@ class AudioBase(QMainWindow, Ui_MainWindow):
         # even though threads have exited, there may still be messages on the main thread's
         # queue (messages that threads emitted before the abort):
         print('All threads exited')
+        # open anoter thread to run verify & waiting
+        self.statusLabel.show()
+        self.runVerify()
+        self.infoText.setEnabled(True)
 
-        # TODO : DEBUG
-        self.verify = VerifyWindow(self)
-        self.verify.show()
 
+    def runVerify(self):
+        print('Run verify')
+        p = subprocess.Popen(["./test.sh","-p"], shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        (stdoutput, erroutput) = p.communicate()
+        str = stdoutput.decode("utf-8")
+        self.infoText.setPlainText(str)
 
 
 
