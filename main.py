@@ -29,8 +29,6 @@ class Recorder(QObject):
 
     sig_step = pyqtSignal(np.ndarray)  # return record array for draw chart
 
-    frames=[]
-
     def __init__(self):
         super().__init__()
         self.__abort = False
@@ -50,6 +48,7 @@ class Recorder(QObject):
         received from GUI (such as abort).
         """
         print("*  recording")
+        self.frames = []
 
         self.pa = pyaudio.PyAudio()
         self.stream = self.pa.open(format=FORMAT,
@@ -92,12 +91,14 @@ class Recorder(QObject):
 
         self.__abort = True
 
+
 class Inference(QObject):
 
     sig_result = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
+        self.__abort = False
 
     @pyqtSlot()
     def work(self):
@@ -106,13 +107,17 @@ class Inference(QObject):
         (stdoutput, erroutput) = p.communicate()
         str = stdoutput.decode("utf-8")
         self.sig_result.emit(str)
-        self.__abort = True
     def abort(self):
         print("* end Inference")
+        self.__abort = True
+
 
 class MainGui(QMainWindow, Ui_MainWindow):
 
     sig_recorder_abort_workers = pyqtSignal()
+    sig_inference_abort_workers = pyqtSignal()
+
+    btn_flag = 0
 
     def __init__(self, parent=None):
 
@@ -127,13 +132,13 @@ class MainGui(QMainWindow, Ui_MainWindow):
 
     def _connectSignals(self):
         ## 放btn connect function
-        self.startBtn.clicked.connect(self.start_record)
-        self.stopBtn.clicked.connect(self.abort_workers)
-
+        self.startBtn.clicked.connect(self.btn_event)
+        self.resetBtn.clicked.connect(self.reset_event)
     def initial_ui(self):
+        # place the window
+        self.move(200,100)
         # PushButton
         self.startBtn.setEnabled(True)
-        self.stopBtn.setDisabled(True)
         # GraphicsView
         self.graphicsView.paused = False
         self.graphicsView.logScale = False
@@ -146,13 +151,14 @@ class MainGui(QMainWindow, Ui_MainWindow):
 
         self.infoText.setDisabled(True)
 
-        # set start & stop icon
+        # set start icon
         self.startBtn.setIcon(QtGui.QIcon('record.png'))
         self.startBtn.setIconSize(QtCore.QSize(100,100))
-        self.stopBtn.setIcon(QtGui.QIcon('stop.png'))
-        self.stopBtn.setIconSize(QtCore.QSize(100,100))
 
-
+        # set reset icon
+        self.resetBtn.setIcon(QtGui.QIcon('reset.png'))
+        self.resetBtn.setIconSize(QtCore.QSize(120,120))
+        self.resetBtn.setDisabled(True)
 
         # set waiting gif
         self.movie = QMovie("wait.gif",QtCore.QByteArray(),self)
@@ -176,31 +182,71 @@ class MainGui(QMainWindow, Ui_MainWindow):
         f = np.fft.fftshift(f)
         return f.tolist(), (np.absolute(Pxx)).tolist()
 
-    def start_record(self):
-        self.startBtn.setDisabled(True)
-        self.stopBtn.setEnabled(True)
+    def btn_event(self):
+        if(self.btn_flag == 0):
+            self.btn_flag=1
 
-        self.__threads = []
+            self.startBtn.setIcon(QtGui.QIcon('stop.png'))
+            self.startBtn.setIconSize(QtCore.QSize(100, 100))
 
-        # create a recorder object
-        record = Recorder()
-        record_thread = QThread()
-        record_thread.setObjectName('record thread')
-        self.__threads.append((record_thread, record))  # need to store worker too otherwise will be gc'd
+            self.__threads = []
 
-        record.moveToThread(record_thread)
+            # create a recorder object
+            record = Recorder()
+            record_thread = QThread()
+            record_thread.setObjectName('record thread')
+            self.__threads.append((record_thread, record))  # need to store worker too otherwise will be gc'd
 
-        # get progress messages from worker:
-        record.sig_step.connect(self.on_recorder_worker_step)
+            record.moveToThread(record_thread)
 
-        # control worker:
-        self.sig_recorder_abort_workers.connect(record.abort)
+            # get progress messages from worker:
+            record.sig_step.connect(self.on_recorder_worker_step)
 
-        # get read to start worker:record
+            # control worker:
+            self.sig_recorder_abort_workers.connect(record.abort)
 
-        record_thread.started.connect(record.work)
-        record_thread.start()  # this will emit 'started' and start thread's event loop
+            # get read to start worker:record
 
+            record_thread.started.connect(record.work)
+            record_thread.start()  # this will emit 'started' and start thread's event loop
+        else:
+            self.btn_flag=0
+
+            self.startBtn.setIcon(QtGui.QIcon('record.png'))
+            self.startBtn.setIconSize(QtCore.QSize(100, 100))
+
+            self.sig_recorder_abort_workers.emit()
+            print('Asking each worker to abort')
+            for record_thread, record in self.__threads:  # note nice unpacking by Python, avoids indexing
+                record_thread.quit()  # this will quit **as soon as thread event loop unblocks**
+                record_thread.wait()  # <- so you need to wait for it to *actually* quit
+            self.startBtn.setDisabled(True)
+            self.statusLabel.show()
+
+            inference = Inference()
+            inference_thread = QThread()
+            inference_thread.setObjectName('Inference Thread')
+            self.__threads.append((inference_thread, inference))  # need to store worker too otherwise will be gc'd
+
+            inference.moveToThread(inference_thread)
+            inference.sig_result.connect(self.on_inference_worker_end)
+
+            self.sig_inference_abort_workers.connect(inference.abort)
+
+            inference_thread.started.connect(inference.work)
+            inference_thread.start()  # this will emit 'started' and start thread's event loop
+
+    def reset_event(self):
+
+        # stop inference thread
+        for inference_thread, inference in self.__threads:  # note nice unpacking by Python, avoids indexing
+            inference_thread.quit()  # this will quit **as soon as thread event loop unblocks**
+            inference_thread.wait()  # <- so you need to wait for it to *actually* quit
+
+        self.resetBtn.setDisabled(True)
+        self.startBtn.setEnabled(True)
+        self.infoText.clear()
+        self.graphicsView.p1.clear()
 
     @pyqtSlot(np.ndarray)
     def on_recorder_worker_step(self,r_data):
@@ -208,31 +254,14 @@ class MainGui(QMainWindow, Ui_MainWindow):
         f, Pxx = self.get_spectrum(r_data)
         self.graphicsView.p1.plot(x=f, y=Pxx, clear=True)
 
-    def abort_workers(self):
-        self.sig_recorder_abort_workers.emit()
-        print('Asking each worker to abort')
-        for record_thread, record in self.__threads:  # note nice unpacking by Python, avoids indexing
-            record_thread.quit()  # this will quit **as soon as thread event loop unblocks**
-            record_thread.wait()  # <- so you need to wait for it to *actually* quit
-        self.stopBtn.setDisabled(True)
-        self.statusLabel.show()
-
-        inference = Inference()
-        inference_thread = QThread()
-        inference_thread.setObjectName('Inference Thread')
-        self.__threads.append((inference_thread, inference))  # need to store worker too otherwise will be gc'd
-
-        inference.moveToThread(inference_thread)
-        inference.sig_result.connect(self.on_inference_worker_end)
-
-        inference_thread.started.connect(inference.work)
-        inference_thread.start()  # this will emit 'started' and start thread's event loop
 
     @pyqtSlot(str)
     def on_inference_worker_end(self,str):
         self.statusLabel.hide()
         self.infoText.setEnabled(True)
         self.infoText.setPlainText(str)
+        self.resetBtn.setEnabled(True)
+
 
 if __name__ == '__main__':
     import sys
