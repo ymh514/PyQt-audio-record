@@ -22,16 +22,12 @@ RATE = 16000
 CHUNK = 1024
 LEVEL = 100 # threshold
 
-# TODO : inference thread
-
 class Recorder(QObject):
     """
     Must derive from QObject in order to emit signals, connect slots to other signals, and operate in a QThread.
     """
 
     sig_step = pyqtSignal(np.ndarray)  # return record array for draw chart
-
-
 
     frames=[]
 
@@ -97,7 +93,6 @@ class Recorder(QObject):
         self.__abort = True
 
 class Inference(QObject):
-<<<<<<< HEAD
 
     sig_result = pyqtSignal(str)
 
@@ -117,27 +112,6 @@ class Inference(QObject):
 
 class MainGui(QMainWindow, Ui_MainWindow):
 
-=======
-
-    sig_result = pyqtSignal(str)
-
-    def __init__(self):
-        super().__init__()
-
-    @pyqtSlot()
-    def work(self):
-        print("*  Inference")
-        p = subprocess.Popen(["./test.sh","-p"], shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        (stdoutput, erroutput) = p.communicate()
-        str = stdoutput.decode("utf-8")
-        self.sig_result.emit(str)
-        self.__abort = True
-    def abort(self):
-        print("* end Inference")
-
-class MainGui(QMainWindow, Ui_MainWindow):
-
->>>>>>> d21c9d1683c015ef41af7968ff52e94887df48dc
     sig_recorder_abort_workers = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -171,6 +145,14 @@ class MainGui(QMainWindow, Ui_MainWindow):
         self.graphicsView.p1.setYRange(0,300)
 
         self.infoText.setDisabled(True)
+
+        # set start & stop icon
+        self.startBtn.setIcon(QtGui.QIcon('record.png'))
+        self.startBtn.setIconSize(QtCore.QSize(100,100))
+        self.stopBtn.setIcon(QtGui.QIcon('stop.png'))
+        self.stopBtn.setIconSize(QtCore.QSize(100,100))
+
+
 
         # set waiting gif
         self.movie = QMovie("wait.gif",QtCore.QByteArray(),self)

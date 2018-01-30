@@ -19,10 +19,12 @@ class Ui_MainWindow(object):
         self.graphicsView.setGeometry(QtCore.QRect(20, 80, 1231, 721))
         self.graphicsView.setObjectName("graphicsView")
         self.startBtn = QtWidgets.QPushButton(self.centralWidget)
-        self.startBtn.setGeometry(QtCore.QRect(20, 820, 1881, 80))
+        self.startBtn.setGeometry(QtCore.QRect(20, 820, 861, 151))
+        self.startBtn.setText("")
         self.startBtn.setObjectName("startBtn")
         self.stopBtn = QtWidgets.QPushButton(self.centralWidget)
-        self.stopBtn.setGeometry(QtCore.QRect(20, 910, 1881, 80))
+        self.stopBtn.setGeometry(QtCore.QRect(910, 820, 991, 151))
+        self.stopBtn.setText("")
         self.stopBtn.setObjectName("stopBtn")
         self.infoText = QtWidgets.QPlainTextEdit(self.centralWidget)
         self.infoText.setGeometry(QtCore.QRect(1270, 80, 631, 721))
@@ -64,8 +66,6 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.startBtn.setText(_translate("MainWindow", "Start"))
-        self.stopBtn.setText(_translate("MainWindow", "Stop"))
         self.infoLabel.setText(_translate("MainWindow", "Output Information :"))
         self.pcmLabel.setText(_translate("MainWindow", "Record Audio PCM :"))
 
