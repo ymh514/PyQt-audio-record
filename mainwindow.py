@@ -41,7 +41,7 @@ class Ui_MainWindow(object):
         self.pcmLabel.setFont(font)
         self.pcmLabel.setObjectName("pcmLabel")
         self.statusLabel = QtWidgets.QLabel(self.centralWidget)
-        self.statusLabel.setGeometry(QtCore.QRect(1460, 80, 331, 371))
+        self.statusLabel.setGeometry(QtCore.QRect(1450, 80, 331, 371))
         self.statusLabel.setText("")
         self.statusLabel.setObjectName("statusLabel")
         self.resetBtn = QtWidgets.QPushButton(self.centralWidget)
