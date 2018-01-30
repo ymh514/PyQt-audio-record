@@ -28,6 +28,7 @@
           <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/main.py">
               <provider selected="true" editor-type-id="text-editor">
+<<<<<<< HEAD
                 <state relative-caret-position="782">
                   <caret line="23" column="0" lean-forward="true" selection-start-line="23" selection-start-column="0" selection-end-line="23" selection-end-column="0" />
                   <folding>
@@ -37,6 +38,16 @@
                     <element signature="e#2783#3246#0" expanded="false" />
                     <element signature="e#3724#3862#0" expanded="false" />
                     <element signature="e#4888#5117#0" expanded="false" />
+=======
+                <state relative-caret-position="783">
+                  <caret line="231" column="0" lean-forward="true" selection-start-line="231" selection-start-column="0" selection-end-line="231" selection-end-column="0" />
+                  <folding>
+                    <element signature="e#0#11#0" expanded="true" />
+                    <element signature="e#595#2779#0" expanded="false" />
+                    <element signature="e#847#894#0" expanded="false" />
+                    <element signature="e#3753#3891#0" expanded="false" />
+                    <element signature="e#4913#5142#0" expanded="false" />
+>>>>>>> d21c9d1683c015ef41af7968ff52e94887df48dc
                   </folding>
                 </state>
               </provider>
@@ -60,7 +71,11 @@
             <entry file="file://$PROJECT_DIR$/main.py">
               <provider selected="true" editor-type-id="text-editor">
                 <state relative-caret-position="420">
+<<<<<<< HEAD
                   <caret line="126" column="0" lean-forward="false" selection-start-line="126" selection-start-column="0" selection-end-line="126" selection-end-column="0" />
+=======
+                  <caret line="130" column="0" lean-forward="false" selection-start-line="130" selection-start-column="0" selection-end-line="130" selection-end-column="0" />
+>>>>>>> d21c9d1683c015ef41af7968ff52e94887df48dc
                   <folding>
                     <element signature="e#0#11#0" expanded="true" />
                   </folding>
@@ -339,11 +354,18 @@
           <caret line="62" column="29" lean-forward="false" selection-start-line="62" selection-start-column="29" selection-end-line="62" selection-end-column="29" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
+<<<<<<< HEAD
             <element signature="e#568#2750#0" expanded="false" />
             <element signature="e#818#865#0" expanded="false" />
             <element signature="e#2783#3246#0" expanded="false" />
             <element signature="e#3724#3862#0" expanded="false" />
             <element signature="e#4888#5117#0" expanded="false" />
+=======
+            <element signature="e#595#2779#0" expanded="false" />
+            <element signature="e#847#894#0" expanded="false" />
+            <element signature="e#3753#3891#0" expanded="false" />
+            <element signature="e#4913#5142#0" expanded="false" />
+>>>>>>> d21c9d1683c015ef41af7968ff52e94887df48dc
           </folding>
         </state>
       </provider>
@@ -443,6 +465,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/main.py">
       <provider selected="true" editor-type-id="text-editor">
+<<<<<<< HEAD
         <state relative-caret-position="782">
           <caret line="23" column="0" lean-forward="true" selection-start-line="23" selection-start-column="0" selection-end-line="23" selection-end-column="0" />
           <folding>
@@ -452,6 +475,16 @@
             <element signature="e#2783#3246#0" expanded="false" />
             <element signature="e#3724#3862#0" expanded="false" />
             <element signature="e#4888#5117#0" expanded="false" />
+=======
+        <state relative-caret-position="783">
+          <caret line="231" column="0" lean-forward="true" selection-start-line="231" selection-start-column="0" selection-end-line="231" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
+            <element signature="e#595#2779#0" expanded="false" />
+            <element signature="e#847#894#0" expanded="false" />
+            <element signature="e#3753#3891#0" expanded="false" />
+            <element signature="e#4913#5142#0" expanded="false" />
+>>>>>>> d21c9d1683c015ef41af7968ff52e94887df48dc
           </folding>
         </state>
       </provider>
