@@ -22,6 +22,8 @@ RATE = 16000
 CHUNK = 1024
 LEVEL = 100 # threshold
 
+# TODO : inference thread
+
 class Recorder(QObject):
     """
     Must derive from QObject in order to emit signals, connect slots to other signals, and operate in a QThread.
@@ -29,13 +31,15 @@ class Recorder(QObject):
 
     sig_step = pyqtSignal(np.ndarray)  # return record array for draw chart
 
+
+
     frames=[]
 
     def __init__(self):
         super().__init__()
         self.__abort = False
 
-    def readData(self,block):
+    def read_data(self,block):
         count = len(block)/2
         format = "%dh"%(count)
         shorts = struct.unpack( format, block )
@@ -59,13 +63,13 @@ class Recorder(QObject):
                                    frames_per_buffer=CHUNK)
 
         while 1:
-            ### record
+            # record
             data = self.stream.read(CHUNK)
-            audio_data = np.fromstring(data, dtype=np.short)
-            print(np.max(audio_data))
+            # audio_data = np.fromstring(data, dtype=np.short)
+            # print(np.max(audio_data))
 
             self.frames.append(data)
-            r_data = self.readData(data)
+            r_data = self.read_data(data)
 
             ###
             self.sig_step.emit(r_data)
@@ -92,29 +96,45 @@ class Recorder(QObject):
 
         self.__abort = True
 
+class Inference(QObject):
 
-class AudioBase(QMainWindow, Ui_MainWindow):
+    sig_result = pyqtSignal(str)
 
-    sig_abort_workers = pyqtSignal()
+    def __init__(self):
+        super().__init__()
+
+    @pyqtSlot()
+    def work(self):
+        print("*  Inference")
+        p = subprocess.Popen(["./test.sh","-p"], shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        (stdoutput, erroutput) = p.communicate()
+        str = stdoutput.decode("utf-8")
+        self.sig_result.emit(str)
+        self.__abort = True
+    def abort(self):
+        print("* end Inference")
+
+class MainGui(QMainWindow, Ui_MainWindow):
+
+    sig_recorder_abort_workers = pyqtSignal()
 
     def __init__(self, parent=None):
 
-        super(AudioBase, self).__init__(parent)
+        super(MainGui, self).__init__(parent)
         self.setupUi(self)
-        self.initUi()
+        self.initial_ui()
 
         # Make any cross object connections.
         self._connectSignals()
         QThread.currentThread().setObjectName('main')  # threads can be named, useful for log output
         self.__threads = None
 
-
     def _connectSignals(self):
         ## 放btn connect function
-        self.startBtn.clicked.connect(self.startRecord)
+        self.startBtn.clicked.connect(self.start_record)
         self.stopBtn.clicked.connect(self.abort_workers)
 
-    def initUi(self):
+    def initial_ui(self):
         # PushButton
         self.startBtn.setEnabled(True)
         self.stopBtn.setDisabled(True)
@@ -137,7 +157,7 @@ class AudioBase(QMainWindow, Ui_MainWindow):
         self.movie.setSpeed(100)
         self.statusLabel.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.movie.setCacheMode(QtGui.QMovie.CacheAll)
-        self.movie.setSpeed(100)
+
         self.statusLabel.setMovie(self.movie)
         self.movie.start()
 
@@ -152,7 +172,7 @@ class AudioBase(QMainWindow, Ui_MainWindow):
         f = np.fft.fftshift(f)
         return f.tolist(), (np.absolute(Pxx)).tolist()
 
-    def startRecord(self):
+    def start_record(self):
         self.startBtn.setDisabled(True)
         self.stopBtn.setEnabled(True)
 
@@ -167,48 +187,48 @@ class AudioBase(QMainWindow, Ui_MainWindow):
         record.moveToThread(record_thread)
 
         # get progress messages from worker:
-        record.sig_step.connect(self.on_worker_step)
+        record.sig_step.connect(self.on_recorder_worker_step)
 
         # control worker:
-        self.sig_abort_workers.connect(record.abort)
+        self.sig_recorder_abort_workers.connect(record.abort)
 
-        # get read to start worker:
+        # get read to start worker:record
 
         record_thread.started.connect(record.work)
         record_thread.start()  # this will emit 'started' and start thread's event loop
 
+
     @pyqtSlot(np.ndarray)
-    def on_worker_step(self,r_data):
+    def on_recorder_worker_step(self,r_data):
         # draw gui chart
         f, Pxx = self.get_spectrum(r_data)
         self.graphicsView.p1.plot(x=f, y=Pxx, clear=True)
 
-
-    @pyqtSlot()
     def abort_workers(self):
-        self.sig_abort_workers.emit()
+        self.sig_recorder_abort_workers.emit()
         print('Asking each worker to abort')
         for record_thread, record in self.__threads:  # note nice unpacking by Python, avoids indexing
             record_thread.quit()  # this will quit **as soon as thread event loop unblocks**
             record_thread.wait()  # <- so you need to wait for it to *actually* quit
         self.stopBtn.setDisabled(True)
-        # even though threads have exited, there may still be messages on the main thread's
-        # queue (messages that threads emitted before the abort):
-        print('All threads exited')
-        # open anoter thread to run verify & waiting
         self.statusLabel.show()
-        self.runVerify()
+
+        inference = Inference()
+        inference_thread = QThread()
+        inference_thread.setObjectName('Inference Thread')
+        self.__threads.append((inference_thread, inference))  # need to store worker too otherwise will be gc'd
+
+        inference.moveToThread(inference_thread)
+        inference.sig_result.connect(self.on_inference_worker_end)
+
+        inference_thread.started.connect(inference.work)
+        inference_thread.start()  # this will emit 'started' and start thread's event loop
+
+    @pyqtSlot(str)
+    def on_inference_worker_end(self,str):
+        self.statusLabel.hide()
         self.infoText.setEnabled(True)
-
-
-    def runVerify(self):
-        print('Run verify')
-        p = subprocess.Popen(["./test.sh","-p"], shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        (stdoutput, erroutput) = p.communicate()
-        str = stdoutput.decode("utf-8")
         self.infoText.setPlainText(str)
-
-
 
 if __name__ == '__main__':
     import sys
@@ -216,7 +236,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setApplicationName("Audio Device Test")
 
-    audio = AudioBase()
+    audio = MainGui()
     audio.show()
 
 sys.exit(app.exec_())
