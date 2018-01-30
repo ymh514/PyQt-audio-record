@@ -22,8 +22,6 @@ RATE = 16000
 CHUNK = 1024
 LEVEL = 100 # threshold
 
-# TODO : inference thread
-
 class Recorder(QObject):
     """
     Must derive from QObject in order to emit signals, connect slots to other signals, and operate in a QThread.
